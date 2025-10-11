@@ -1,0 +1,310 @@
+/* ===========================
+   Globais
+=========================== */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #212529;
+  line-height: 1.6;
+}
+
+/* Links */
+a { text-decoration: none; }
+a:hover { opacity: 0.8; }
+
+/* ===========================
+   Variáveis
+=========================== */
+:root {
+  --primary: #FFD500;   /* amarelo RELOG */
+  --secondary: #000000; /* preto RELOG */
+}
+
+/* ===========================
+   Navbar
+=========================== */
+.navbar {
+  background: var(--secondary);
+  color: var(--primary);
+}
+.navbar-brand {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+}
+.nav-link {
+  color: var(--primary);
+  transition: all 0.2s ease-in-out;
+}
+.nav-link.active {
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary);
+}
+.nav-link:hover {
+  transform: translateY(-2px);
+  color: var(--primary);
+}
+
+/* ===========================
+   Conteúdo logado
+=========================== */
+.content { margin-top: 80px; padding: 20px 0; }
+
+/* ===========================
+   Botões (globais)
+=========================== */
+.btn-primary {
+  background: var(--secondary);
+  border: none;
+  font-weight: 500;
+  color: var(--primary);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.btn-gradient {
+  background: var(--secondary);
+  color: var(--primary);
+  border: none;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-gradient:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+.btn-gradient:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(255,213,0,0.35);
+}
+.btn-gradient:disabled {
+  opacity: .6;
+  filter: saturate(.7);
+}
+
+/* Botão de contorno */
+.btn-outline-gradient {
+  background: #fff;
+  color: var(--secondary);
+  border: 2px solid var(--secondary);
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.btn-outline-gradient:hover {
+  background: #fff6bf;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+/* ===========================
+   Cards e Dropdowns
+=========================== */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+.dropdown-menu {
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.dropdown-item:hover { background-color: #fff6bf; }
+
+/* ===========================
+   Chat (WhatsApp style clean)
+=========================== */
+.chat-shell {
+  height: calc(100vh - 100px);
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+}
+
+/* Sidebar */
+.chat-list {
+  overflow-y: auto;
+  background: #f8f9fb;
+  height: 100%;
+}
+.chat-item {
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid #f0f1f3;
+  transition: background .15s ease;
+}
+.chat-item:hover { background: #fff6bf; }
+.chat-item.active {
+  background: #fff2a8;
+  border-left: 4px solid var(--primary);
+}
+
+/* Área principal (conversa) */
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex-grow: 1;
+}
+
+/* Cabeçalho */
+.chat-header {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.chat-header h3 {
+  color: var(--secondary);
+  font-weight: 600;
+}
+.chat-header .actions a {
+  background: var(--primary);
+  color: var(--secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: transform .2s ease;
+}
+.chat-header .actions a:hover {
+  transform: scale(1.05);
+}
+
+/* Mensagens */
+.chat-messages {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 16px;
+  gap: 8px;
+  overflow-y: auto;
+  background: #f5f7fa;
+}
+
+/* Bolhas */
+.msg-row { display: flex; }
+.msg-row.me { justify-content: flex-end; }
+.msg-row.other { justify-content: flex-start; }
+
+.msg-bubble {
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  background: #ffffff;
+  word-wrap: break-word;
+}
+.msg-row.me .msg-bubble {
+  background: #fff6bf; /* amarelo claro */
+  border-radius: 14px 14px 4px 14px;
+}
+.msg-row.other .msg-bubble {
+  background: #ffffff;
+  border: 1px solid #eee;
+  border-radius: 14px 14px 14px 4px;
+}
+.msg-text { white-space: pre-wrap; }
+.msg-meta {
+  margin-top: 4px;
+  font-size: .75rem;
+  color: #6c757d;
+  text-align: right;
+}
+
+/* Rodapé fixo */
+.chat-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #e5e5e5;
+  background: #fff;
+  padding: 12px;
+}
+
+/* Botão de envio */
+.btn-send {
+  background-color: var(--primary);
+  color: var(--secondary);
+  border: none;
+  font-weight: 600;
+  transition: background .2s ease;
+}
+.btn-send:hover { background-color: #e6c400; }
+
+/* Avatar */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e9ecef;
+  display: inline-block;
+}
+
+/* ===========================
+   Login Page
+=========================== */
+.login-wrapper {
+  display: flex;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+.login-col {
+  flex: 0 0 40%;
+  background: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.login-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  width: 100%;
+  max-width: 360px;
+  padding: 2rem;
+}
+.login-card .form-label { color: #333; font-weight: 500; }
+.login-card .form-control {
+  background: #fdfdfd;
+  border: 1px solid #ddd;
+  color: #333;
+  border-radius: 8px;
+}
+.login-card .form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 4px rgba(255, 213, 0, 0.4);
+}
+.login-bg {
+  flex: 0 0 60%;
+  background: url("../img/login-bg.jpg") no-repeat center center;
+  background-size: cover;
+}
+
+/* ===========================
+   Sidebar Header e fundo
+=========================== */
+.sidebar-header {
+  background: var(--secondary);
+  color: var(--primary);
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+}

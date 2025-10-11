@@ -1,0 +1,62 @@
+# ==========================
+# Arquivos sensíveis
+# ==========================
+.env
+*.session
+session_userbot.session
+session_userbot.session-journal
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ==========================
+# Pastas de ambiente virtual
+# ==========================
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+build/
+dist/
+
+# ==========================
+# Logs e saídas temporárias
+# ==========================
+*.log
+log.txt
+nohup.out
+*.pid
+*.gz
+*.bak
+*.swp
+
+# ==========================
+# Cache de IDEs
+# ==========================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ==========================
+# Arquivos do sistema operacional
+# ==========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================
+# Arquivos de teste
+# ==========================
+test_*.py
+tests/
+__tests__/
+
+# ==========================
+# Outros temporários
+# ==========================
+*.tmp
+*.temp
+*.orig

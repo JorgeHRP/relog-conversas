@@ -189,6 +189,7 @@
         {% for c in conversas %}
         <a href="{{ url_for('conversas', id=c.id) }}" class="chat-item {% if conversa and conversa.id == c.id %}active{% endif %}">
           <strong>{{ c.nome }}</strong>
+          <small>mensagens</small>
         </a>
         {% endfor %}
       </div>

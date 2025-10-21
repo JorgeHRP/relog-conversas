@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Conversas - Chat MVP</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      margin: 0;
+      background: #f4f6f8;
+      font-family: "Poppins", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .chat-container {
+      display: flex;
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      width: 90%;
+      max-width: 1100px;
+      height: 80vh;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+      animation: fadeIn 0.6s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Sidebar */
+    .chat-sidebar {
+      width: 30%;
+      background: #fafbfc;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 1.2rem 1.5rem;
+      background: linear-gradient(90deg, #000, #FFD500);
+      color: #fff;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .chat-item {
+      padding: 1rem 1.3rem;
+      text-decoration: none;
+      color: #333;
+      border-bottom: 1px solid #f1f1f1;
+      display: block;
+      transition: background 0.2s ease;
+    }
+
+    .chat-item:hover {
+      background: #eef5ff;
+    }
+
+    .chat-item.active {
+      background: #e5f0ff;
+      border-left: 4px solid #3ca9f0;
+    }
+
+    .chat-item strong {
+      display: block;
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .chat-item small {
+      color: #888;
+    }
+
+    /* Main chat */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f5f7fa;
+    }
+
+    .chat-header {
+      padding: 1rem 1.5rem;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+    }
+
+    .chat-header h3 {
+      margin: 0;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .chat-header .actions {
+      margin-left: auto;
+    }
+
+    .chat-header .actions a {
+      text-decoration: none;
+      background: linear-gradient(90deg, #000, #FFD500);
+      color: #fff;
+      padding: 0.6rem 1rem;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: transform 0.2s ease;
+    }
+
+    .chat-header .actions a:hover {
+      transform: scale(1.05);
+    }
+
+    .chat-body {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+
+    .msg {
+      max-width: 70%;
+      padding: 0.8rem 1rem;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      transition: background 0.2s;
+    }
+
+    .msg.me {
+      align-self: flex-end;
+      background: #dcf8c6;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.other {
+      align-self: flex-start;
+      background: #fff;
+      border: 1px solid #ececec;
+      border-bottom-left-radius: 4px;
+    }
+
+    .placeholder {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 1rem;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <!-- Sidebar -->
+    <aside class="chat-sidebar">
+      <div class="sidebar-header">
+        Conversas
+        <a href="{{ url_for('atualizar_usuarios') }}"
+          style="float:right; background:#FFD500; color:#000; padding:4px 10px;
+                  border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:600;">
+          🔄 Atualizar
+        </a>
+      </div>
+      <div class="chat-list">
+        {% for c in conversas %}
+        <a href="{{ url_for('conversas', id=c.id) }}" class="chat-item {% if conversa and conversa.id == c.id %}active{% endif %}">
+          <strong>{{ c.nome }}</strong>
+          <small>mensagens</small>
+        </a>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="chat-main">
+      {% if conversa %}
+      <div class="chat-header">
+        <h3>{{ conversa.nome }}</h3>
+        <div class="actions">
+          <a href="{{ url_for('exportar_pdf', conversa_id=conversa.id) }}">Exportar PDF</a>
+        </div>
+      </div>
+
+      <div class="chat-body">
+        {% for msg in conversa.messages %}
+          {% if msg.human %}
+            <div class="msg me">{{ msg.human }}</div>
+          {% endif %}
+          {% if msg.system %}
+            <div class="msg other">{{ msg.system }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="placeholder">
+        <p>👈 Selecione uma conversa à esquerda</p>
+      </div>
+      {% endif %}
+    </main>
+  </div>
+</body>
+</html>

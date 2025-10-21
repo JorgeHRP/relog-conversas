@@ -60,3 +60,8 @@ __tests__/
 *.tmp
 *.temp
 *.orig
+
+
+app.old.py
+
+login.old.html

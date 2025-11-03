@@ -26,26 +26,37 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 # Funções auxiliares
 # ---------------------------------
 def get_usuarios():
-    """Obtém e salva os usuários na sessão"""
+    """Obtém a lista de usuários do webhook configurado no .env"""
     try:
-        resp = requests.post(WEBHOOK_URL, json={"acao": "usuarios"}, timeout=10)
-        if resp.status_code == 200:
-            data = resp.json()
-            usuarios = []
-            for u in data:
-                usuarios.append({
-                    "id": str(u.get("id")),
-                    "nome": (
-                        u.get("firt_name") or u.get("first_name") or
-                        u.get("username") or f"Usuário {u.get('id')}"
-                    ),
-                })
-            session["usuarios"] = usuarios
-            return usuarios
-    except Exception as e:
-        print("❌ Erro ao buscar usuários:", e)
-    return []
+        payload = {"acao": "usuarios"}
 
+        r = requests.post(
+            WEBHOOK_URL,
+            json=payload,
+            timeout=10
+        )
+
+        if r.status_code != 200:
+            return []
+
+        data = r.json()
+        usuarios = []
+
+        for item in data:
+            nome = item.get("firt_name") or item.get("first_name") or "Sem nome"
+            sobrenome = item.get("last_name") or ""
+            nome_completo = f"{nome} {sobrenome}".strip()
+
+            usuarios.append({
+                "id": str(item.get("id", "")),
+                "nome": str(nome_completo),
+                "phone": str(item.get("phone", ""))
+            })
+
+        return usuarios
+
+    except Exception:
+        return []
 
 def get_conversas(user_id=None):
     """Obtém conversas do webhook (para um usuário específico, se informado)"""

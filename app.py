@@ -252,7 +252,10 @@ def exportar_pdf(conversa_id):
 def atualizar_usuarios():
     if "user" not in session:
         return redirect(url_for("login"))
-    get_usuarios()  # força atualização
+
+    usuarios = get_usuarios()  # força atualização
+    session["usuarios"] = usuarios  # salva na sessão
+
     return redirect(url_for("conversas"))
 
 

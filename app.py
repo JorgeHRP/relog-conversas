@@ -6,10 +6,7 @@ from reportlab.pdfgen import canvas
 import os, requests
 from datetime import datetime
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
-from reportlab.pdfgen import canvas
-from io import BytesIO
 from flask import send_file
 import textwrap
 
@@ -115,149 +112,203 @@ def conversas():
 
     return render_template("conversas.html", conversas=usuarios, conversa=conversa)
 
-
 @app.route("/exportar_pdf/<conversa_id>")
 def exportar_pdf(conversa_id):
-    conversas_raw = get_conversas(conversa_id)
-    msgs = [m for m in conversas_raw if str(m.get("chat")) == str(conversa_id)]  # 🔹 CORRIGIDO: usar 'chat'
-    
-    usuarios = session.get("usuarios") or []
-    usuario = next((u for u in usuarios if str(u["id"]) == str(conversa_id)), None)
-    nome = usuario["nome"] if usuario else f"Usuário {conversa_id}"
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors
+    from reportlab.pdfgen import canvas
+    import textwrap
+    from datetime import datetime
+    import requests
 
+    # ===== BUSCA DE DADOS =====
+    conversas_raw = get_conversas(conversa_id)
+    msgs = [m for m in conversas_raw if str(m.get("chat")) == str(conversa_id)]
+
+    usuarios = session.get("usuarios") or get_usuarios()
+    usuario = next((u for u in usuarios if str(u["id"]) == str(conversa_id)), None)
+
+    # Buscar informações completas do usuário
+    user_info = {
+        "username": "",
+        "id": conversa_id,
+        "first_name": "",
+        "last_name": "",
+        "phone": ""
+    }
+    try:
+        payload = {"acao": "usuarios"}
+        resp = requests.post(WEBHOOK_URL, json=payload, timeout=10)
+        if resp.status_code == 200:
+            all_users = resp.json()
+            user_data = next((u for u in all_users if str(u.get("id")) == str(conversa_id)), None)
+            if user_data:
+                user_info = {
+                    "username": user_data.get("username", ""),
+                    "id": str(user_data.get("id", conversa_id)),
+                    "first_name": user_data.get("firt_name") or user_data.get("first_name", ""),
+                    "last_name": user_data.get("last_name", ""),
+                    "phone": user_data.get("phone", "")
+                }
+    except Exception:
+        pass
+
+    # Fallback com dados básicos
+    if not user_info.get("first_name") and usuario:
+        user_info["first_name"] = usuario.get("nome", "")
+        user_info["phone"] = usuario.get("phone", "")
+
+    nome_completo = f"{user_info['first_name']} {user_info['last_name']}".strip() or f"Usuário {conversa_id}"
+
+    # ===== CRIAÇÃO DO PDF =====
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
     largura, altura = A4
-    margem = 2 * cm
-    y = altura - 2.5 * cm
+    margem = 1.5 * cm
+    y = altura - 1.5 * cm
 
-    # ========== CABEÇALHO JURÍDICO ==========
-    # Logo/Título da empresa
+    # ===== CABEÇALHO =====
+    pdf.setFillColor(colors.HexColor("#0088cc"))
+    pdf.rect(0, altura - 3*cm, largura, 3*cm, fill=1, stroke=0)
+    pdf.setFillColor(colors.white)
     pdf.setFont("Helvetica-Bold", 18)
-    pdf.setFillColor(colors.HexColor("#1a1a1a"))
-    pdf.drawString(margem, y, "RELATÓRIO DE CONVERSAÇÃO")
-    y -= 25
-    
-    # Linha decorativa
-    pdf.setStrokeColor(colors.HexColor("#FFD500"))
-    pdf.setLineWidth(2)
-    pdf.line(margem, y, largura - margem, y)
-    y -= 30
+    pdf.drawString(margem, altura - 2*cm, nome_completo)
 
-    # ========== INFORMAÇÕES DO DOCUMENTO ==========
+    y = altura - 3.8 * cm
+
+    # ===== INFORMAÇÕES DO CONTATO =====
+    def format_info(value):
+        return str(value).strip() if value else "Não informado / Privado"
+
     pdf.setFont("Helvetica-Bold", 11)
     pdf.setFillColor(colors.black)
-    pdf.drawString(margem, y, "DADOS DA CONVERSA")
+    pdf.drawString(margem, y, "INFORMAÇÕES DO CONTATO")
     y -= 18
-    
-    pdf.setFont("Helvetica", 10)
-    pdf.drawString(margem, y, f"Participante: {nome}")
-    y -= 15
-    pdf.drawString(margem, y, f"ID da Conversa: {conversa_id}")
-    y -= 15
-    pdf.drawString(margem, y, f"Data de Exportação: {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')}")
-    y -= 15
-    pdf.drawString(margem, y, f"Total de Mensagens: {len(msgs)}")
-    y -= 15
-    
-    # Período da conversa
+    pdf.setFont("Helvetica", 9)
+
+    pdf.drawString(margem, y, f"Username: @{user_info['username']}" if user_info['username'] else "Username: Não informado / Privado")
+    y -= 13
+    pdf.drawString(margem, y, f"ID: {user_info['id']}")
+    y -= 13
+    pdf.drawString(margem, y, f"Primeiro nome: {format_info(user_info['first_name'])}")
+    y -= 13
+    pdf.drawString(margem, y, f"Sobrenome: {format_info(user_info['last_name'])}")
+    y -= 13
+    pdf.drawString(margem, y, f"Telefone: {format_info(user_info['phone'])}")
+    y -= 25
+
+    # ===== INFORMAÇÕES DA EXPORTAÇÃO =====
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(margem, y, "INFORMAÇÕES DA EXPORTAÇÃO")
+    y -= 16
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(margem, y, f"Exportado em: {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')}")
+    y -= 13
+    pdf.drawString(margem, y, f"Total de mensagens: {len(msgs)}")
+    y -= 13
     if msgs:
         primeira = msgs[0].get("date", "")
         ultima = msgs[-1].get("date", "")
         pdf.drawString(margem, y, f"Período: {primeira} até {ultima}")
         y -= 20
-    
-    # Linha separadora
-    pdf.setStrokeColor(colors.grey)
-    pdf.setLineWidth(1)
-    pdf.line(margem, y, largura - margem, y)
-    y -= 25
 
-    # ========== HASH/INTEGRIDADE (OPCIONAL MAS RECOMENDADO) ==========
-    import hashlib
-    conteudo_hash = "".join([m.get("text", "") for m in msgs])
-    hash_doc = hashlib.sha256(conteudo_hash.encode()).hexdigest()[:16]
-    
-    pdf.setFont("Helvetica-Oblique", 8)
-    pdf.setFillColor(colors.grey)
-    pdf.drawString(margem, y, f"Hash de Integridade: {hash_doc}")
-    y -= 25
+    # ===== FUNDO =====
+    pdf.setFillColor(colors.HexColor("#f4f4f5"))
+    pdf.rect(0, 0, largura, y, fill=1, stroke=0)
+    y -= 0.5 * cm
+    pdf.setFont("Helvetica", 9)
 
-    # ========== MENSAGENS ==========
-    pdf.setFont("Helvetica-Bold", 11)
-    pdf.setFillColor(colors.black)
-    pdf.drawString(margem, y, "HISTÓRICO DE MENSAGENS")
-    y -= 20
-
-    pdf.setFont("Helvetica", 10)
-    msg_count = 1
-
+    # ===== MENSAGENS =====
     for msg in msgs:
         sender_id = str(msg.get("sender"))
-        text = msg.get("text", "")
+        text = msg.get("text", "").strip()
         data = msg.get("date", "")
-        
-        is_me = sender_id == "8222874193"  # 🔹 Seu número
-        remetente = "Você" if is_me else nome
+        if not text:
+            continue
 
-        # Quebra de linha automática
-        linhas = textwrap.wrap(text, width=80)
-        altura_msg = 15 * len(linhas) + 35
+        is_operacao = sender_id == "2119777974"
 
-        # Quebra de página se necessário
-        if y - altura_msg < 3*cm:
-            # Rodapé da página
+        # Quebra de linha ajustada
+        max_width_chars = 60
+        linhas = textwrap.wrap(text, width=max_width_chars)
+        altura_msg = 11 * len(linhas) + 20
+        max_largura = 11.5 * cm
+        largura_texto = max(pdf.stringWidth(l, "Helvetica", 9) for l in linhas)
+        largura_necessaria = min(largura_texto + 0.8 * cm, max_largura)
+
+        # Nova página se necessário
+        if y - altura_msg < 2.5 * cm:
             pdf.setFont("Helvetica-Oblique", 8)
             pdf.setFillColor(colors.grey)
-            pdf.drawCentredString(largura/2, 1.5*cm, f"Página {pdf.getPageNumber()}")
-            
+            pdf.drawCentredString(largura / 2, 1.5 * cm, f"Página {pdf.getPageNumber()}")
             pdf.showPage()
-            pdf.setFont("Helvetica", 10)
-            y = altura - 3*cm
+            pdf.setFillColor(colors.HexColor("#f4f4f5"))
+            pdf.rect(0, 0, largura, altura, fill=1, stroke=0)
+            y = altura - 2 * cm
+            pdf.setFont("Helvetica", 9)
 
-        # Box da mensagem (mais formal)
-        pdf.setStrokeColor(colors.HexColor("#e0e0e0"))
-        pdf.setLineWidth(0.5)
-        pdf.rect(margem, y - altura_msg, largura - 2*margem, altura_msg, stroke=1, fill=0)
+        # Lado e cor
+        if is_operacao:
+            balao_x = largura - margem - largura_necessaria
+            cor_balao = colors.HexColor("#dcf8c6")
+        else:
+            balao_x = margem
+            cor_balao = colors.white
 
-        # Cabeçalho da mensagem
-        pdf.setFont("Helvetica-Bold", 9)
-        pdf.setFillColor(colors.HexColor("#1a1a1a"))
-        pdf.drawString(margem + 10, y - 15, f"#{msg_count} - {remetente}")
-        
-        pdf.setFont("Helvetica-Oblique", 8)
-        pdf.setFillColor(colors.grey)
-        pdf.drawRightString(largura - margem - 10, y - 15, data)
+        # Balão
+        pdf.setFillColor(cor_balao)
+        pdf.setStrokeColor(colors.HexColor("#d1d1d1"))
+        pdf.setLineWidth(0.3)
+        pdf.roundRect(
+            balao_x, y - altura_msg + 10,
+            largura_necessaria, altura_msg - 10, 5, fill=1, stroke=1
+        )
 
-        # Conteúdo da mensagem
-        pdf.setFont("Helvetica", 9)
+        # Texto
+        y_texto = y - 17
         pdf.setFillColor(colors.black)
-        y_text = y - 30
         for linha in linhas:
-            pdf.drawString(margem + 10, y_text, linha)
-            y_text -= 14
+            pdf.drawString(balao_x + 0.35 * cm, y_texto, linha)
+            y_texto -= 10.5
 
-        y -= altura_msg + 10
-        msg_count += 1
+        # Data — lado oposto ao remetente
+        pdf.setFont("Helvetica", 7)
+        pdf.setFillColor(colors.HexColor("#777777"))
+        hora_texto = f"{data} ✓✓" if is_operacao else data
 
-    # ========== RODAPÉ FINAL ==========
-    pdf.setFont("Helvetica-Oblique", 8)
+        if is_operacao:
+            # Alinhado à direita
+            pdf.drawRightString(balao_x + largura_necessaria, y - altura_msg + 5, hora_texto)
+        else:
+            # Alinhado à esquerda
+            pdf.drawString(balao_x, y - altura_msg + 5, hora_texto)
+
+        y -= altura_msg + 8
+        pdf.setFont("Helvetica", 9)
+
+    # ===== RODAPÉ =====
+    pdf.setFont("Helvetica-Oblique", 7)
     pdf.setFillColor(colors.grey)
-    pdf.drawCentredString(largura/2, 1.5*cm, f"Página {pdf.getPageNumber()}")
-    pdf.drawString(margem, 1*cm, "Este documento foi gerado automaticamente pelo sistema.")
-    pdf.drawRightString(largura - margem, 1*cm, f"Hash: {hash_doc}")
-    
+    pdf.drawCentredString(
+        largura / 2, 1.2 * cm,
+        f"Página {pdf.getPageNumber()} - Documento gerado automaticamente pelo sistema"
+    )
+
     pdf.save()
     buffer.seek(0)
-    
-    # Nome do arquivo mais formal
+
     data_arquivo = datetime.now().strftime('%Y%m%d_%H%M%S')
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"Relatorio_Conversa_{conversa_id}_{data_arquivo}.pdf",
+        download_name=f"Conversa_Telegram_{conversa_id}_{data_arquivo}.pdf",
         mimetype="application/pdf",
     )
+
+
+
     
 @app.route("/atualizar_usuarios")
 def atualizar_usuarios():
